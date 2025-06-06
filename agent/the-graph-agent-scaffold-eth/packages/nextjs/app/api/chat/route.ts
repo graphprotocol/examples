@@ -127,6 +127,61 @@ export async function POST(req: Request) {
        - tokenAddress: (Optional) The address of one of the tokens in the pair, for price orientation.
      Example: getTokenOHLCByPool({ poolAddress: "0x...", networkId: "ethereum", resolution: "1d" })
 
+  9. For NFT collections, you can use the "getNFTCollections" tool to get collection metadata.
+     Parameters:
+       - contractAddress: (Required) The NFT contract address.
+       - networkId: (Optional) The network identifier.
+     Example: getNFTCollections({ contractAddress: "0x...", networkId: "ethereum" })
+
+  10. To get details for a specific NFT, use the "getNFTItems" tool.
+      Parameters:
+        - contractAddress: (Required) The NFT contract address.
+        - tokenId: (Required) The token ID of the specific NFT.
+        - networkId: (Optional) The network identifier.
+      Example: getNFTItems({ contractAddress: "0x...", tokenId: "1234", networkId: "ethereum" })
+
+  11. To fetch NFT sales data, use the "getNFTSales" tool.
+      Parameters:
+        - networkId: (Optional) The network identifier.
+        - any: (Optional) Filter by any address involved (buyer, seller, or contract).
+        - offerer: (Optional) Filter by seller address.
+        - recipient: (Optional) Filter by buyer address.
+        - token: (Optional) Filter by NFT contract address.
+        - startTime: (Optional) Start timestamp (Unix seconds).
+        - endTime: (Optional) End timestamp (Unix seconds).
+        - limit: (Optional) Maximum number of results.
+        - page: (Optional) Page number for pagination.
+      Example: getNFTSales({ networkId: "ethereum", token: "0x...", limit: 20 })
+
+  12. To get NFT holders for a collection, use the "getNFTHolders" tool.
+      Parameters:
+        - contractAddress: (Required) The NFT contract address.
+        - networkId: (Optional) The network identifier.
+        - page: (Optional) Page number for pagination.
+        - pageSize: (Optional) Number of results per page.
+      Example: getNFTHolders({ contractAddress: "0x...", networkId: "ethereum", pageSize: 50 })
+
+  13. To get NFT ownerships for a wallet, use the "getNFTOwnerships" tool.
+      Parameters:
+        - ownerAddress: (Required) The wallet address to query.
+        - networkId: (Optional) The network identifier.
+        - contractAddress: (Optional) Filter by specific NFT contract.
+      Example: getNFTOwnerships({ ownerAddress: "${userAddress}", networkId: "ethereum" })
+
+  14. To get NFT activities (transfers, mints, burns, etc.), use the "getNFTActivities" tool.
+      Parameters:
+        - networkId: (Optional) The network identifier.
+        - contractAddress: (Optional) Filter by NFT contract address.
+        - fromAddress: (Optional) Filter by from address.
+        - toAddress: (Optional) Filter by to address.
+        - tokenId: (Optional) Filter by specific token ID.
+        - activityType: (Optional) Filter by activity type (transfer, mint, burn, etc.).
+        - startTime: (Optional) Start timestamp (Unix seconds).
+        - endTime: (Optional) End timestamp (Unix seconds).
+        - limit: (Optional) Maximum number of results.
+        - page: (Optional) Page number for pagination.
+      Example: getNFTActivities({ networkId: "ethereum", contractAddress: "0x...", limit: 50 })
+
   For Uniswap V3, use this exact endpoint:
   "${uniswapEndpoint}"
 

@@ -15,8 +15,15 @@ import {
   GetTokenOHLCByContractAgentParamsSchema,
   GetTokenOHLCByPoolAgentParamsSchema,
   GetHistoricalBalancesAgentParamsSchema,
+  // NFT schemas
+  GetNFTCollectionsAgentParamsSchema,
+  GetNFTItemsAgentParamsSchema,
+  GetNFTSalesAgentParamsSchema,
+  GetNFTHoldersAgentParamsSchema,
+  GetNFTOwnershipsAgentParamsSchema,
+  GetNFTActivitiesAgentParamsSchema,
 } from "../token-api/schemas";
-import { fetchTokenDetails, fetchTokenTransfers, fetchTokenMetadata, fetchTokenHolders, fetchTokenPools, fetchTokenSwaps, fetchTokenOHLCByContract, fetchTokenOHLCByPool, fetchHistoricalBalances } from "../token-api/utils";
+import { fetchTokenDetails, fetchTokenTransfers, fetchTokenMetadata, fetchTokenHolders, fetchTokenPools, fetchTokenSwaps, fetchTokenOHLCByContract, fetchTokenOHLCByPool, fetchHistoricalBalances, fetchNFTCollections, fetchNFTItems, fetchNFTSales, fetchNFTHolders, fetchNFTOwnerships, fetchNFTActivities } from "../token-api/utils";
 import type { TokenDetailsParams, TokenTransfersParams, TokenMetadataParams, TokenHoldersParams, PoolsParams, SwapsParams, ContractOHLCParams, PoolOHLCParams, HistoricalBalancesParams } from "../token-api/utils";
 
 // Define the schema for the arguments the agent will provide for getTokenBalances
@@ -560,25 +567,237 @@ class TokenApiProvider extends ActionProvider<WalletProvider> { // Use WalletPro
     }
   }
 
-  // TODO: Implement other actions:
-  // - getTokenPrice (for a specific token)
-  // - etc., based on the available hooks/utility functions you create.
+  // --- NFT Actions ---
 
-  // Example placeholder for another action:
-  /*
   @CreateAction({
-    name: "get-token-details",
-    description: "Fetches details for a specific token contract.",
-    schema: z.object({
-      contractAddress: z.string().describe("The token contract address (e.g., 0x...)."),
-      networkId: NetworkIdSchema.optional().describe("Optional network ID."),
-    })
+    name: "get-nft-collections",
+    description: "Fetches NFT collection data for a specific contract address. Returns collection metadata including name, symbol, total supply, and owner count.",
+    schema: GetNFTCollectionsAgentParamsSchema,
   })
-  async getTokenDetails(args: { contractAddress: string; networkId?: string }): Promise<string> {
-    // ... implementation using a fetchTokenDetails utility ...
-    return "Not implemented yet.";
+  async getNFTCollections(
+    _walletProvider: WalletProvider,
+    args: z.infer<typeof GetNFTCollectionsAgentParamsSchema>
+  ): Promise<string> {
+    console.log(`Action: getNFTCollections, Args: ${JSON.stringify(args)}`);
+
+    if (!args.contractAddress) {
+      return "Error: Contract address is required to get NFT collection data.";
+    }
+
+    try {
+      const response = await fetchNFTCollections(args.contractAddress, {
+        network_id: args.networkId,
+      });
+
+      if (response.error) {
+        return `Error fetching NFT collections: ${response.error.message} (Status: ${response.error.status})`;
+      }
+
+      if (!response.data || response.data.length === 0) {
+        return `No NFT collection found for contract ${args.contractAddress}${args.networkId ? ` on ${args.networkId}` : ''}.`;
+      }
+
+      return JSON.stringify(response.data, null, 2);
+    } catch (error) {
+      console.error("Error in getNFTCollections action:", error);
+      const message = error instanceof Error ? error.message : "An unexpected error occurred.";
+      return `Error: ${message}`;
+    }
   }
-  */
+
+  @CreateAction({
+    name: "get-nft-items",
+    description: "Fetches details for a specific NFT item by contract address and token ID. Returns metadata, owner, and attributes.",
+    schema: GetNFTItemsAgentParamsSchema,
+  })
+  async getNFTItems(
+    _walletProvider: WalletProvider,
+    args: z.infer<typeof GetNFTItemsAgentParamsSchema>
+  ): Promise<string> {
+    console.log(`Action: getNFTItems, Args: ${JSON.stringify(args)}`);
+
+    if (!args.contractAddress || !args.tokenId) {
+      return "Error: Contract address and token ID are required to get NFT item details.";
+    }
+
+    try {
+      const response = await fetchNFTItems(args.contractAddress, args.tokenId, {
+        network_id: args.networkId,
+      });
+
+      if (response.error) {
+        return `Error fetching NFT items: ${response.error.message} (Status: ${response.error.status})`;
+      }
+
+      if (!response.data || response.data.length === 0) {
+        return `No NFT item found for contract ${args.contractAddress} token ID ${args.tokenId}${args.networkId ? ` on ${args.networkId}` : ''}.`;
+      }
+
+      return JSON.stringify(response.data, null, 2);
+    } catch (error) {
+      console.error("Error in getNFTItems action:", error);
+      const message = error instanceof Error ? error.message : "An unexpected error occurred.";
+      return `Error: ${message}`;
+    }
+  }
+
+  @CreateAction({
+    name: "get-nft-sales",
+    description: "Fetches NFT sales data. Can filter by network, addresses (buyer/seller), contract, time range, and pagination.",
+    schema: GetNFTSalesAgentParamsSchema,
+  })
+  async getNFTSales(
+    _walletProvider: WalletProvider,
+    args: z.infer<typeof GetNFTSalesAgentParamsSchema>
+  ): Promise<string> {
+    console.log(`Action: getNFTSales, Args: ${JSON.stringify(args)}`);
+
+    try {
+      const response = await fetchNFTSales({
+        network_id: args.networkId,
+        any: args.any,
+        offerer: args.offerer,
+        recipient: args.recipient,
+        contract: args.token,
+        startTime: args.startTime,
+        endTime: args.endTime,
+        orderBy: args.orderBy,
+        orderDirection: args.orderDirection,
+        limit: args.limit,
+        page: args.page,
+      });
+
+      if (response.error) {
+        return `Error fetching NFT sales: ${response.error.message} (Status: ${response.error.status})`;
+      }
+
+      if (!response.data || response.data.length === 0) {
+        return `No NFT sales found${args.networkId ? ` on ${args.networkId}` : ''} with the specified criteria.`;
+      }
+
+      return JSON.stringify(response.data, null, 2);
+    } catch (error) {
+      console.error("Error in getNFTSales action:", error);
+      const message = error instanceof Error ? error.message : "An unexpected error occurred.";
+      return `Error: ${message}`;
+    }
+  }
+
+  @CreateAction({
+    name: "get-nft-holders",
+    description: "Fetches NFT holders for a specific contract address. Returns list of addresses and their token counts with pagination support.",
+    schema: GetNFTHoldersAgentParamsSchema,
+  })
+  async getNFTHolders(
+    _walletProvider: WalletProvider,
+    args: z.infer<typeof GetNFTHoldersAgentParamsSchema>
+  ): Promise<string> {
+    console.log(`Action: getNFTHolders, Args: ${JSON.stringify(args)}`);
+
+    if (!args.contractAddress) {
+      return "Error: Contract address is required to get NFT holders.";
+    }
+
+    try {
+      const response = await fetchNFTHolders(args.contractAddress, {
+        network_id: args.networkId,
+        page: args.page,
+        page_size: args.pageSize,
+      });
+
+      if (response.error) {
+        return `Error fetching NFT holders: ${response.error.message} (Status: ${response.error.status})`;
+      }
+
+      if (!response.data || !response.data.data || response.data.data.length === 0) {
+        return `No NFT holders found for contract ${args.contractAddress}${args.networkId ? ` on ${args.networkId}` : ''}.`;
+      }
+
+      return JSON.stringify(response.data, null, 2);
+    } catch (error) {
+      console.error("Error in getNFTHolders action:", error);
+      const message = error instanceof Error ? error.message : "An unexpected error occurred.";
+      return `Error: ${message}`;
+    }
+  }
+
+  @CreateAction({
+    name: "get-nft-ownerships",
+    description: "Fetches NFT ownerships for a specific wallet address. Returns all NFTs owned by the address, optionally filtered by contract.",
+    schema: GetNFTOwnershipsAgentParamsSchema,
+  })
+  async getNFTOwnerships(
+    _walletProvider: WalletProvider,
+    args: z.infer<typeof GetNFTOwnershipsAgentParamsSchema>
+  ): Promise<string> {
+    console.log(`Action: getNFTOwnerships, Args: ${JSON.stringify(args)}`);
+
+    if (!args.ownerAddress) {
+      return "Error: Owner address is required to get NFT ownerships.";
+    }
+
+    try {
+      const response = await fetchNFTOwnerships(args.ownerAddress, {
+        network_id: args.networkId,
+        contract: args.contractAddress,
+      });
+
+      if (response.error) {
+        return `Error fetching NFT ownerships: ${response.error.message} (Status: ${response.error.status})`;
+      }
+
+      if (!response.data || response.data.length === 0) {
+        return `No NFT ownerships found for address ${args.ownerAddress}${args.networkId ? ` on ${args.networkId}` : ''}${args.contractAddress ? ` for contract ${args.contractAddress}` : ''}.`;
+      }
+
+      return JSON.stringify(response.data, null, 2);
+    } catch (error) {
+      console.error("Error in getNFTOwnerships action:", error);
+      const message = error instanceof Error ? error.message : "An unexpected error occurred.";
+      return `Error: ${message}`;
+    }
+  }
+
+  @CreateAction({
+    name: "get-nft-activities",
+    description: "Fetches NFT activities (transfers, mints, burns, etc.). Can filter by network, contract, addresses, token ID, activity type, time range, and pagination.",
+    schema: GetNFTActivitiesAgentParamsSchema,
+  })
+  async getNFTActivities(
+    _walletProvider: WalletProvider,
+    args: z.infer<typeof GetNFTActivitiesAgentParamsSchema>
+  ): Promise<string> {
+    console.log(`Action: getNFTActivities, Args: ${JSON.stringify(args)}`);
+
+    try {
+      const response = await fetchNFTActivities({
+        network_id: args.networkId,
+        contract: args.contractAddress,
+        from: args.fromAddress,
+        to: args.toAddress,
+        token_id: args.tokenId,
+        activity_type: args.activityType,
+        startTime: args.startTime,
+        endTime: args.endTime,
+        limit: args.limit,
+        page: args.page,
+      });
+
+      if (response.error) {
+        return `Error fetching NFT activities: ${response.error.message} (Status: ${response.error.status})`;
+      }
+
+      if (!response.data || response.data.length === 0) {
+        return `No NFT activities found${args.networkId ? ` on ${args.networkId}` : ''} with the specified criteria.`;
+      }
+
+      return JSON.stringify(response.data, null, 2);
+    } catch (error) {
+      console.error("Error in getNFTActivities action:", error);
+      const message = error instanceof Error ? error.message : "An unexpected error occurred.";
+      return `Error: ${message}`;
+    }
+  }
 }
 
 export const tokenApiProvider = () => new TokenApiProvider(); 

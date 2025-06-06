@@ -662,3 +662,244 @@ export const GetHistoricalBalancesAgentParamsSchema = z.object({
     .optional()
     .describe("Optional: Time resolution (day or hour). Default is often day."),
 });
+
+// --- NFT Schemas ---
+
+// Schema for NFT Attribute
+export const NFTAttributeSchema = z.object({
+  trait_type: z.string(),
+  value: z.string(),
+});
+
+// Schema for NFT Collection
+export const NFTCollectionSchema = z.object({
+  token_standard: z.string().describe("ERC721, ERC1155, etc."),
+  contract: z.string().describe("Contract address"),
+  contract_creation: z.string().describe("Contract creation timestamp"),
+  contract_creator: z.string().describe("Contract creator address"),
+  symbol: z.string().describe("Token symbol"),
+  name: z.string().describe("Collection name"),
+  base_uri: z.string().optional().describe("Base URI for metadata"),
+  total_supply: z.number().describe("Total supply of tokens"),
+  total_unique_supply: z.number().optional().describe("Total unique supply"),
+  owners: z.number().describe("Number of unique owners"),
+  total_transfers: z.number().describe("Total number of transfers"),
+  network_id: NetworkIdSchema.describe("Network ID"),
+});
+
+// Schema for NFT Collection response
+export const NFTCollectionsResponseDataSchema = z.object({
+  data: z.array(NFTCollectionSchema),
+  statistics: z
+    .object({
+      elapsed: z.number().optional(),
+      rows_read: z.number().optional(),
+      bytes_read: z.number().optional(),
+    })
+    .optional(),
+});
+
+// API response schema for NFT collections
+export const NFTCollectionsApiResponseSchema = ApiResponseSchema(z.array(NFTCollectionSchema));
+
+// Schema for NFT Item
+export const NFTItemSchema = z.object({
+  token_id: z.string().describe("Token ID"),
+  token_standard: z.enum(["ERC721", "ERC1155"]).describe("Token standard"),
+  contract: z.string().describe("Contract address"),
+  owner: z.string().describe("Current owner address"),
+  symbol: z.string().optional().describe("Token symbol"),
+  uri: z.string().optional().describe("Token URI"),
+  name: z.string().optional().describe("Token name"),
+  image: z.string().optional().describe("Token image URL"),
+  description: z.string().optional().describe("Token description"),
+  attributes: z.array(NFTAttributeSchema).optional().describe("Token attributes"),
+  network_id: NetworkIdSchema.describe("Network ID"),
+});
+
+// Schema for NFT Items response
+export const NFTItemsResponseDataSchema = z.object({
+  data: z.array(NFTItemSchema),
+  statistics: z
+    .object({
+      elapsed: z.number().optional(),
+      rows_read: z.number().optional(),
+      bytes_read: z.number().optional(),
+    })
+    .optional(),
+});
+
+// API response schema for NFT items
+export const NFTItemsApiResponseSchema = ApiResponseSchema(z.array(NFTItemSchema));
+
+// Schema for NFT Sale
+export const NFTSaleSchema = z.object({
+  timestamp: z.string().describe("Sale timestamp"),
+  block_num: z.number().describe("Block number"),
+  tx_hash: z.string().describe("Transaction hash"),
+  token: z.string().describe("Contract address of the NFT"),
+  token_id: z.number().describe("Token ID"),
+  symbol: z.string().describe("Token symbol"),
+  name: z.string().describe("Token name"),
+  offerer: z.string().describe("Seller address"),
+  recipient: z.string().describe("Buyer address"),
+  sale_amount: z.number().describe("Sale amount"),
+  sale_currency: z.string().describe("Sale currency"),
+});
+
+// Schema for NFT Sales response
+export const NFTSalesResponseDataSchema = z.object({
+  data: z.array(NFTSaleSchema),
+  statistics: z
+    .object({
+      elapsed: z.number().optional(),
+      rows_read: z.number().optional(),
+      bytes_read: z.number().optional(),
+    })
+    .optional(),
+});
+
+// API response schema for NFT sales
+export const NFTSalesApiResponseSchema = ApiResponseSchema(z.array(NFTSaleSchema));
+
+// Schema for NFT Holder
+export const NFTHolderSchema = z.object({
+  owner: z.string().describe("Owner address"),
+  balance: z.number().describe("Number of tokens owned"),
+  token_standard: z.string().describe("Token standard"),
+  contract: z.string().describe("Contract address"),
+  network_id: NetworkIdSchema.describe("Network ID"),
+});
+
+// Schema for NFT Holders response
+export const NFTHoldersResponseDataSchema = z.object({
+  data: z.array(NFTHolderSchema),
+  statistics: z
+    .object({
+      elapsed: z.number().optional(),
+      rows_read: z.number().optional(),
+      bytes_read: z.number().optional(),
+    })
+    .optional(),
+  pagination: z
+    .object({
+      page: z.number(),
+      page_size: z.number(),
+      total_pages: z.number(),
+    })
+    .optional(),
+});
+
+// API response schema for NFT holders
+export const NFTHoldersApiResponseSchema = ApiResponseSchema(NFTHoldersResponseDataSchema);
+
+// Schema for NFT Ownership
+export const NFTOwnershipSchema = z.object({
+  token_id: z.string().describe("Token ID"),
+  owner: z.string().describe("Owner address"),
+  contract: z.string().describe("Contract address"),
+  token_standard: z.string().describe("Token standard"),
+  network_id: NetworkIdSchema.describe("Network ID"),
+});
+
+// Schema for NFT Ownerships response
+export const NFTOwnershipsResponseDataSchema = z.object({
+  data: z.array(NFTOwnershipSchema),
+  statistics: z
+    .object({
+      elapsed: z.number().optional(),
+      rows_read: z.number().optional(),
+      bytes_read: z.number().optional(),
+    })
+    .optional(),
+});
+
+// API response schema for NFT ownerships
+export const NFTOwnershipsApiResponseSchema = ApiResponseSchema(z.array(NFTOwnershipSchema));
+
+// Schema for NFT Activity
+export const NFTActivitySchema = z.object({
+  timestamp: z.string().describe("Activity timestamp"),
+  block_num: z.number().describe("Block number"),
+  tx_hash: z.string().describe("Transaction hash"),
+  token: z.string().describe("Contract address"),
+  token_id: z.number().describe("Token ID"),
+  from: z.string().describe("From address"),
+  to: z.string().describe("To address"),
+  activity_type: z.string().describe("Type of activity (transfer, mint, burn, etc.)"),
+  network_id: NetworkIdSchema.describe("Network ID"),
+});
+
+// Schema for NFT Activities response
+export const NFTActivitiesResponseDataSchema = z.object({
+  data: z.array(NFTActivitySchema),
+  statistics: z
+    .object({
+      elapsed: z.number().optional(),
+      rows_read: z.number().optional(),
+      bytes_read: z.number().optional(),
+    })
+    .optional(),
+});
+
+// API response schema for NFT activities
+export const NFTActivitiesApiResponseSchema = ApiResponseSchema(z.array(NFTActivitySchema));
+
+// --- Agent Parameter Schemas for NFT endpoints ---
+
+// Schema for the agent to provide arguments for getting NFT collections
+export const GetNFTCollectionsAgentParamsSchema = z.object({
+  contractAddress: z.string().describe("The NFT contract address (e.g., 0x...)."),
+  networkId: NetworkIdSchema.optional().describe("Optional network ID where the NFT exists (e.g., mainnet, bsc)."),
+});
+
+// Schema for the agent to provide arguments for getting NFT items
+export const GetNFTItemsAgentParamsSchema = z.object({
+  contractAddress: z.string().describe("The NFT contract address (e.g., 0x...)."),
+  tokenId: z.string().describe("The token ID of the specific NFT."),
+  networkId: NetworkIdSchema.optional().describe("Optional network ID where the NFT exists (e.g., mainnet, bsc)."),
+});
+
+// Schema for the agent to provide arguments for getting NFT sales
+export const GetNFTSalesAgentParamsSchema = z.object({
+  networkId: NetworkIdSchema.optional().describe("Optional network ID to filter sales (e.g., mainnet, bsc)."),
+  any: z.string().optional().describe("Filter by any address involved (offerer, recipient, token contract)."),
+  offerer: z.string().optional().describe("Filter by seller address."),
+  recipient: z.string().optional().describe("Filter by buyer address."),
+  token: z.string().optional().describe("Filter by NFT contract address."),
+  startTime: z.number().optional().describe("Filter by start timestamp (Unix seconds)."),
+  endTime: z.number().optional().describe("Filter by end timestamp (Unix seconds)."),
+  orderBy: z.enum(["timestamp"]).optional().describe("Order results by timestamp."),
+  orderDirection: z.enum(["asc", "desc"]).optional().describe("Order direction (ascending or descending)."),
+  limit: z.number().optional().describe("Maximum number of results to return."),
+  page: z.number().optional().describe("Page number for pagination."),
+});
+
+// Schema for the agent to provide arguments for getting NFT holders
+export const GetNFTHoldersAgentParamsSchema = z.object({
+  contractAddress: z.string().describe("The NFT contract address (e.g., 0x...)."),
+  networkId: NetworkIdSchema.optional().describe("Optional network ID where the NFT exists (e.g., mainnet, bsc)."),
+  page: z.number().optional().describe("Page number for pagination."),
+  pageSize: z.number().optional().describe("Number of results per page."),
+});
+
+// Schema for the agent to provide arguments for getting NFT ownerships
+export const GetNFTOwnershipsAgentParamsSchema = z.object({
+  ownerAddress: z.string().describe("The wallet address to query NFT ownerships for."),
+  networkId: NetworkIdSchema.optional().describe("Optional network ID to filter by (e.g., mainnet, bsc)."),
+  contractAddress: z.string().optional().describe("Optional NFT contract address to filter by."),
+});
+
+// Schema for the agent to provide arguments for getting NFT activities
+export const GetNFTActivitiesAgentParamsSchema = z.object({
+  networkId: NetworkIdSchema.optional().describe("Optional network ID to filter activities (e.g., mainnet, bsc)."),
+  contractAddress: z.string().optional().describe("Optional NFT contract address to filter by."),
+  fromAddress: z.string().optional().describe("Optional from address to filter activities."),
+  toAddress: z.string().optional().describe("Optional to address to filter activities."),
+  tokenId: z.number().optional().describe("Optional token ID to filter activities."),
+  activityType: z.string().optional().describe("Optional activity type to filter by (transfer, mint, burn, etc.)."),
+  startTime: z.number().optional().describe("Optional start timestamp (Unix seconds)."),
+  endTime: z.number().optional().describe("Optional end timestamp (Unix seconds)."),
+  limit: z.number().optional().describe("Maximum number of results to return."),
+  page: z.number().optional().describe("Page number for pagination."),
+});

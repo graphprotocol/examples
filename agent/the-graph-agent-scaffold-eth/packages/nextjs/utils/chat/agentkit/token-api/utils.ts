@@ -1031,3 +1031,361 @@ export async function fetchHistoricalBalances(
     return { error: { message, status: 500 } };
   }
 }
+
+// --- NFT Utility Functions ---
+
+// Import NFT types from schemas
+export type NFTCollection = z.infer<typeof import("./schemas").NFTCollectionSchema>;
+export type NFTCollectionsApiResponse = z.infer<typeof import("./schemas").NFTCollectionsApiResponseSchema>;
+
+export type NFTItem = z.infer<typeof import("./schemas").NFTItemSchema>;
+export type NFTItemsApiResponse = z.infer<typeof import("./schemas").NFTItemsApiResponseSchema>;
+
+export type NFTSale = z.infer<typeof import("./schemas").NFTSaleSchema>;
+export type NFTSalesApiResponse = z.infer<typeof import("./schemas").NFTSalesApiResponseSchema>;
+
+export type NFTHolder = z.infer<typeof import("./schemas").NFTHolderSchema>;
+export type NFTHoldersApiResponse = z.infer<typeof import("./schemas").NFTHoldersApiResponseSchema>;
+
+export type NFTOwnership = z.infer<typeof import("./schemas").NFTOwnershipSchema>;
+export type NFTOwnershipsApiResponse = z.infer<typeof import("./schemas").NFTOwnershipsApiResponseSchema>;
+
+export type NFTActivity = z.infer<typeof import("./schemas").NFTActivitySchema>;
+export type NFTActivitiesApiResponse = z.infer<typeof import("./schemas").NFTActivitiesApiResponseSchema>;
+
+/**
+ * Fetches NFT collection data from the token API proxy.
+ */
+export async function fetchNFTCollections(
+  contractAddress: string,
+  params?: { network_id?: NetworkId },
+): Promise<NFTCollectionsApiResponse> {
+  if (!contractAddress) {
+    return { error: { message: "Contract address is required for NFT collections", status: 400 } };
+  }
+
+  const normalizedAddress = contractAddress.toLowerCase();
+  const endpoint = `nft/collections/evm/${normalizedAddress}`;
+
+  const queryParams = new URLSearchParams();
+  queryParams.append("path", endpoint);
+
+  if (params?.network_id) {
+    queryParams.append("network_id", params.network_id);
+  }
+
+  const url = `${API_PROXY_URL}?${queryParams.toString()}`;
+  console.log(`🌐 Fetching NFT collections. URL: ${url}`);
+
+  try {
+    const response = await fetch(url);
+    const responseBody = await response.json();
+
+    if (!response.ok) {
+      console.error(`🔴 API error (${response.status}) for ${url}:`, responseBody);
+      const errorMessage =
+        responseBody?.error?.message || responseBody?.message || `API request failed with status ${response.status}`;
+      return { error: { message: errorMessage, status: response.status } };
+    }
+
+    // Normalize response - expect array of collections
+    let collectionsData: NFTCollection[] = [];
+    if (Array.isArray(responseBody)) {
+      collectionsData = responseBody;
+    } else if (responseBody?.data && Array.isArray(responseBody.data)) {
+      collectionsData = responseBody.data;
+    }
+
+    return { data: collectionsData };
+  } catch (error) {
+    console.error("❌ Network or parsing error in fetchNFTCollections:", error);
+    const message = error instanceof Error ? error.message : "Unknown error occurred while fetching NFT collections";
+    return { error: { message, status: 500 } };
+  }
+}
+
+/**
+ * Fetches NFT item details from the token API proxy.
+ */
+export async function fetchNFTItems(
+  contractAddress: string,
+  tokenId: string,
+  params?: { network_id?: NetworkId },
+): Promise<NFTItemsApiResponse> {
+  if (!contractAddress || !tokenId) {
+    return { error: { message: "Contract address and token ID are required for NFT items", status: 400 } };
+  }
+
+  const endpoint = `nft/items/evm/contract/${contractAddress}/token_id/${tokenId}`;
+
+  const queryParams = new URLSearchParams();
+  queryParams.append("path", endpoint);
+
+  if (params?.network_id) {
+    queryParams.append("network_id", params.network_id);
+  }
+
+  const url = `${API_PROXY_URL}?${queryParams.toString()}`;
+  console.log(`🌐 Fetching NFT items. URL: ${url}`);
+
+  try {
+    const response = await fetch(url);
+    const responseBody = await response.json();
+
+    if (!response.ok) {
+      console.error(`🔴 API error (${response.status}) for ${url}:`, responseBody);
+      const errorMessage =
+        responseBody?.error?.message || responseBody?.message || `API request failed with status ${response.status}`;
+      return { error: { message: errorMessage, status: response.status } };
+    }
+
+    // Normalize response - expect array of items
+    let itemsData: NFTItem[] = [];
+    if (Array.isArray(responseBody)) {
+      itemsData = responseBody;
+    } else if (responseBody?.data && Array.isArray(responseBody.data)) {
+      itemsData = responseBody.data;
+    }
+
+    return { data: itemsData };
+  } catch (error) {
+    console.error("❌ Network or parsing error in fetchNFTItems:", error);
+    const message = error instanceof Error ? error.message : "Unknown error occurred while fetching NFT items";
+    return { error: { message, status: 500 } };
+  }
+}
+
+/**
+ * Fetches NFT sales data from the token API proxy.
+ */
+export async function fetchNFTSales(params?: {
+  network_id?: NetworkId;
+  any?: string;
+  offerer?: string;
+  recipient?: string;
+  contract?: string;
+  startTime?: number;
+  endTime?: number;
+  orderBy?: "timestamp";
+  orderDirection?: "asc" | "desc";
+  limit?: number;
+  page?: number;
+}): Promise<NFTSalesApiResponse> {
+  const endpoint = "nft/sales/evm";
+
+  const queryParams = new URLSearchParams();
+  queryParams.append("path", endpoint);
+
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && (typeof value === "string" ? value !== "" : true)) {
+        queryParams.append(key, String(value));
+      }
+    });
+  }
+
+  const url = `${API_PROXY_URL}?${queryParams.toString()}`;
+  console.log(`🌐 Fetching NFT sales. URL: ${url}`);
+
+  try {
+    const response = await fetch(url);
+    const responseBody = await response.json();
+
+    if (!response.ok) {
+      console.error(`🔴 API error (${response.status}) for ${url}:`, responseBody);
+      const errorMessage =
+        responseBody?.error?.message || responseBody?.message || `API request failed with status ${response.status}`;
+      return { error: { message: errorMessage, status: response.status } };
+    }
+
+    // Normalize response - expect array of sales
+    let salesData: NFTSale[] = [];
+    if (Array.isArray(responseBody)) {
+      salesData = responseBody;
+    } else if (responseBody?.data && Array.isArray(responseBody.data)) {
+      salesData = responseBody.data;
+    }
+
+    return { data: salesData };
+  } catch (error) {
+    console.error("❌ Network or parsing error in fetchNFTSales:", error);
+    const message = error instanceof Error ? error.message : "Unknown error occurred while fetching NFT sales";
+    return { error: { message, status: 500 } };
+  }
+}
+
+/**
+ * Fetches NFT holders data from the token API proxy.
+ */
+export async function fetchNFTHolders(
+  contractAddress: string,
+  params?: {
+    network_id?: NetworkId;
+    page?: number;
+    page_size?: number;
+  },
+): Promise<NFTHoldersApiResponse> {
+  if (!contractAddress) {
+    return { error: { message: "Contract address is required for NFT holders", status: 400 } };
+  }
+
+  const endpoint = `nft/holders/evm/${contractAddress}`;
+
+  const queryParams = new URLSearchParams();
+  queryParams.append("path", endpoint);
+
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        queryParams.append(key, String(value));
+      }
+    });
+  }
+
+  const url = `${API_PROXY_URL}?${queryParams.toString()}`;
+  console.log(`🌐 Fetching NFT holders. URL: ${url}`);
+
+  try {
+    const response = await fetch(url);
+    const responseBody = await response.json();
+
+    if (!response.ok) {
+      console.error(`🔴 API error (${response.status}) for ${url}:`, responseBody);
+      const errorMessage =
+        responseBody?.error?.message || responseBody?.message || `API request failed with status ${response.status}`;
+      return { error: { message: errorMessage, status: response.status } };
+    }
+
+    // The NFT holders endpoint returns wrapped data with pagination
+    if (responseBody?.data && Array.isArray(responseBody.data)) {
+      return {
+        data: {
+          data: responseBody.data,
+          statistics: responseBody.statistics,
+          pagination: responseBody.pagination,
+        },
+      };
+    }
+
+    return { error: { message: "Unexpected data format received from NFT holders API", status: 500 } };
+  } catch (error) {
+    console.error("❌ Network or parsing error in fetchNFTHolders:", error);
+    const message = error instanceof Error ? error.message : "Unknown error occurred while fetching NFT holders";
+    return { error: { message, status: 500 } };
+  }
+}
+
+/**
+ * Fetches NFT ownerships data from the token API proxy.
+ */
+export async function fetchNFTOwnerships(
+  ownerAddress: string,
+  params?: {
+    network_id?: NetworkId;
+    contract?: string;
+  },
+): Promise<NFTOwnershipsApiResponse> {
+  if (!ownerAddress) {
+    return { error: { message: "Owner address is required for NFT ownerships", status: 400 } };
+  }
+
+  const endpoint = `nft/ownerships/evm/${ownerAddress}`;
+
+  const queryParams = new URLSearchParams();
+  queryParams.append("path", endpoint);
+
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && (typeof value === "string" ? value !== "" : true)) {
+        queryParams.append(key, String(value));
+      }
+    });
+  }
+
+  const url = `${API_PROXY_URL}?${queryParams.toString()}`;
+  console.log(`🌐 Fetching NFT ownerships. URL: ${url}`);
+
+  try {
+    const response = await fetch(url);
+    const responseBody = await response.json();
+
+    if (!response.ok) {
+      console.error(`🔴 API error (${response.status}) for ${url}:`, responseBody);
+      const errorMessage =
+        responseBody?.error?.message || responseBody?.message || `API request failed with status ${response.status}`;
+      return { error: { message: errorMessage, status: response.status } };
+    }
+
+    // Normalize response - expect array of ownerships
+    let ownershipsData: NFTOwnership[] = [];
+    if (Array.isArray(responseBody)) {
+      ownershipsData = responseBody;
+    } else if (responseBody?.data && Array.isArray(responseBody.data)) {
+      ownershipsData = responseBody.data;
+    }
+
+    return { data: ownershipsData };
+  } catch (error) {
+    console.error("❌ Network or parsing error in fetchNFTOwnerships:", error);
+    const message = error instanceof Error ? error.message : "Unknown error occurred while fetching NFT ownerships";
+    return { error: { message, status: 500 } };
+  }
+}
+
+/**
+ * Fetches NFT activities data from the token API proxy.
+ */
+export async function fetchNFTActivities(params?: {
+  network_id?: NetworkId;
+  contract?: string;
+  from?: string;
+  to?: string;
+  token_id?: number;
+  activity_type?: string;
+  startTime?: number;
+  endTime?: number;
+  limit?: number;
+  page?: number;
+}): Promise<NFTActivitiesApiResponse> {
+  const endpoint = "nft/activities/evm";
+
+  const queryParams = new URLSearchParams();
+  queryParams.append("path", endpoint);
+
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && (typeof value === "string" ? value !== "" : true)) {
+        queryParams.append(key, String(value));
+      }
+    });
+  }
+
+  const url = `${API_PROXY_URL}?${queryParams.toString()}`;
+  console.log(`🌐 Fetching NFT activities. URL: ${url}`);
+
+  try {
+    const response = await fetch(url);
+    const responseBody = await response.json();
+
+    if (!response.ok) {
+      console.error(`🔴 API error (${response.status}) for ${url}:`, responseBody);
+      const errorMessage =
+        responseBody?.error?.message || responseBody?.message || `API request failed with status ${response.status}`;
+      return { error: { message: errorMessage, status: response.status } };
+    }
+
+    // Normalize response - expect array of activities
+    let activitiesData: NFTActivity[] = [];
+    if (Array.isArray(responseBody)) {
+      activitiesData = responseBody;
+    } else if (responseBody?.data && Array.isArray(responseBody.data)) {
+      activitiesData = responseBody.data;
+    }
+
+    return { data: activitiesData };
+  } catch (error) {
+    console.error("❌ Network or parsing error in fetchNFTActivities:", error);
+    const message = error instanceof Error ? error.message : "Unknown error occurred while fetching NFT activities";
+    return { error: { message, status: 500 } };
+  }
+}

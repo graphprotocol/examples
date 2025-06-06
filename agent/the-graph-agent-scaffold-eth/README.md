@@ -9,39 +9,49 @@
 
 ## Table of Contents
 
+### Getting Started
+
 -   [Features](#features)
 -   [Requirements](#requirements)
--   [Quickstart](#quickstart)
--   [Architecture](#architecture)
+-   [Quick Setup](#quick-setup)
+-   [Environment Configuration](#environment-configuration)
+
+### Core Integrations
+
+-   [MCP Integration](#mcp-integration) - Dynamic subgraph discovery and querying
+-   [Token API Integration](#token-api-integration) - Comprehensive token data access
+-   [NFT API Integration](#nft-api-integration) - NFT analytics and tracking
+
+### Usage & Examples
+
+-   [Chat Interaction Examples](#chat-interaction-examples)
+    -   [Subgraph MCP Queries](#subgraph-mcp-interaction-via-chat)
+    -   [Token API Queries](#token-api-interaction-via-chat)
+    -   [NFT API Queries](#nft-api-interaction-via-chat)
+-   [Direct API Usage](#direct-api-usage)
+
+### Architecture & Development
+
+-   [System Architecture](#system-architecture)
     -   [Core Components](#core-components)
     -   [Key Files](#key-files)
-    -   [Component Interaction](#component-interaction)
     -   [Data Flow](#data-flow)
--   [Key System Features](#key-system-features)
--   [MCP Integration](#mcp-integration)
-    -   [Overview](#overview)
-    -   [Available MCP Tools](#available-mcp-tools)
-    -   [MCP Provider Implementation](#mcp-provider-implementation)
-    -   [MCP Usage Examples](#mcp-usage-examples)
+-   [Development Guide](#development-guide)
+    -   [Adding New Integrations](#adding-new-integrations)
+    -   [Customizing Responses](#customizing-responses)
+    -   [Testing Strategies](#testing-strategies)
 -   [Available Subgraphs](#available-subgraphs)
 -   [Adding New Subgraph Endpoints](#adding-new-subgraph-endpoints)
--   [Detailed Setup Guide](#detailed-setup-guide)
-    -   [Environment Variables](#environment-variables)
+
+### Deployment & Operations
+
 -   [Security Best Practices](#security-best-practices)
--   [Usage Examples](#usage-examples)
-    -   [Chat Interface](#chat-interface)
-    -   [GraphQL Queries](#graphql-queries)
-    -   [Token API Interaction (via Chat)](#token-api-interaction-via-chat)
--   [API Interaction Best Practices](#api-interaction-best-practices)
-    -   [Query Optimization](#query-optimization)
-    -   [Error Handling](#error-handling)
-    -   [Performance](#performance)
--   [Development Guidelines](#development-guidelines)
-    -   [Adding New Actions](#adding-new-actions)
-    -   [Customizing Responses](#customizing-responses)
-    -   [Testing](#testing)
+-   [Performance Optimization](#performance-optimization)
 -   [Troubleshooting](#troubleshooting)
-    -   [Common Issues](#common-issues)
+
+### Reference
+
+-   [API Reference](#api-reference)
 -   [Contributing](#contributing)
 -   [Documentation](#documentation)
 
@@ -51,6 +61,8 @@
 -   🤖 **AI-Powered Chat Interface**: Natural language interaction with blockchain data and smart contracts
 -   📊 **GraphQL Integration**: Query blockchain data through The Graph protocol
 -   🔌 **MCP Integration**: Direct connection to The Graph's official Model Context Protocol server
+-   🎨 **NFT Analytics**: Comprehensive NFT data analysis including collections, ownership, sales, and activity tracking
+-   🪙 **Token API**: Full token data access for balances, transfers, metadata, and market information
 -   🪝 **[Custom hooks](https://docs.scaffoldeth.io/hooks/)**: Collection of React hooks wrapper around [wagmi](https://wagmi.sh/)
 -   🧱 [**Components**](https://docs.scaffoldeth.io/components/): Collection of common web3 components
 -   🔥 **Burner Wallet & Local Faucet**: Quickly test your application
@@ -66,58 +78,113 @@ Before you begin, you need to install the following tools:
 -   Yarn ([v1](https://classic.yarnpkg.com/en/docs/install/) or [v2+](https://yarnpkg.com/getting-started/install))
 -   [Git](https://git-scm.com/downloads)
 
-## Quickstart
+## Quick Setup
 
-1. Clone the repository:
+Get up and running in under 5 minutes:
+
+1. **Clone and Install**:
 
 ```bash
 git clone https://github.com/graphprotocol/examples.git
 cd agent/the-graph-agent-scaffold-eth
-```
-
-2. Install dependencies:
-
-```bash
 yarn install
 ```
 
-3. Set up environment variables in `.env.local`:
+2. **Configure Environment** (create `.env.local`):
 
 ```bash
-# The Graph Protocol API Key (used for both regular GraphQL and MCP functionality)
+# Required: The Graph Protocol API Key (for MCP and subgraphs)
 GRAPH_API_KEY=your-graph-api-key-here
 
-# OpenAI API Key
+# Required: OpenAI API Key (for AI chat functionality)
 OPENAI_API_KEY=your-openai-api-key-here
 
-# NextAuth Secret (generate with: openssl rand -base64 32)
+# Required: NextAuth Secret (generate with: openssl rand -base64 32)
 NEXTAUTH_SECRET=your-nextauth-secret-here
 
-# Agent Private Key
+# Optional: Agent Private Key (for on-chain transactions)
 AGENT_PRIVATE_KEY=your-agent-private-key-here
 ```
 
-4. Start a local network:
+3. **Start the Application**:
 
 ```bash
+# Start local blockchain (optional - for smart contract features)
 yarn chain
-```
 
-5. Deploy test contracts:
-
-```bash
+# Deploy test contracts (optional)
 yarn deploy
-```
 
-6. Start the NextJS app:
-
-```bash
+# Start the app
 yarn start
 ```
 
-Visit `http://localhost:3000` to interact with your application.
+4. **Access the Interface**:
+   Visit `http://localhost:3000` and start chatting with your AI agent!
 
-## Architecture
+**Quick Test**: Try asking "_Find Uniswap V3 subgraphs_" or "_What's the USDC balance for vitalik.eth?_"
+
+## Environment Configuration
+
+### Required Environment Variables
+
+Store these in a `.env.local` file at the root of your `packages/nextjs` directory. **Never commit your `.env.local` file to version control.**
+
+1.  **`GRAPH_API_KEY`** - The Graph Protocol API Key
+
+    -   Required for both MCP integration and legacy subgraph queries
+    -   Used as Bearer token for The Graph's MCP server authentication
+    -   Get your key from [The Graph Studio](https://thegraph.com/studio/)
+
+2.  **`OPENAI_API_KEY`** - OpenAI API Key
+
+    -   Required for AI chat functionality
+    -   Set up usage limits to prevent unexpected charges
+    -   Get your key from [OpenAI Platform](https://platform.openai.com/)
+
+3.  **`NEXTAUTH_SECRET`** - NextAuth Secret
+    -   Required for session management
+    -   Generate with: `openssl rand -base64 32`
+    -   Keep this secret secure and unique per environment
+
+### Optional Environment Variables
+
+4.  **`AGENT_PRIVATE_KEY`** - Agent's Private Key
+
+    -   Only needed for on-chain transactions
+    -   ⚠️ **Development only** - Never use mainnet keys!
+    -   Generate with: `openssl rand -hex 32` (prefix with "0x")
+
+5.  **Token API Configuration** (if using external Token API):
+    -   `NEXT_PUBLIC_GRAPH_API_URL` - Base URL (defaults to Token API)
+    -   `NEXT_PUBLIC_GRAPH_API_KEY` - API key for Token API
+    -   `NEXT_PUBLIC_GRAPH_TOKEN` - Alternative Bearer token
+
+### Environment Setup Example
+
+```bash
+# Create .env.local file
+cat > .env.local << EOF
+# Core Configuration
+GRAPH_API_KEY=your-graph-api-key-here
+OPENAI_API_KEY=your-openai-api-key-here
+NEXTAUTH_SECRET=$(openssl rand -base64 32)
+
+# Optional: For on-chain features
+AGENT_PRIVATE_KEY=0x$(openssl rand -hex 32)
+
+# Optional: Token API (if using external service)
+NEXT_PUBLIC_GRAPH_API_KEY=your-token-api-key
+EOF
+```
+
+### Security Notes
+
+-   Use development keys with limited permissions
+-   Store minimal funds in development keys
+-   Rotate keys regularly
+-   Never commit `.env.local` to version control
+-   Use platform-specific secure storage for production deployments
 
 ### Core Components
 
@@ -155,11 +222,23 @@ Detailed explanations of the foundational pieces of this application.
         -   **Type Safety**: Uses Zod schemas to validate the structure of GraphQL queries formulated by the agent.
 
 5.  **Token API Integration** (Proxy: `app/api/token-proxy/route.ts`, Utilities: `utils/chat/agentkit/token-api/utils.ts`, Schemas: `utils/chat/agentkit/token-api/schemas.ts`)
+
     -   **Functionality**: Provides access to comprehensive token data (balances, transfers, metadata, market prices, etc.) from an external token API service (e.g., The Graph's Token API).
     -   **Key Aspects**:
         -   **Proxy Server**: A Next.js API route (`/api/token-proxy`) that securely forwards requests to the external token API. This is crucial for hiding API keys from the client-side.
         -   **Utility Functions**: A set of functions in `utils.ts` that simplify fetching specific token data by abstracting the direct API calls through the proxy. These are intended to be used by AgentKit actions.
         -   **Data Schemas**: Zod schemas in `schemas.ts` ensure type safety and validation for both the parameters sent to the API and the data received.
+
+6.  **NFT API Integration** (Proxy: `app/api/token-proxy/route.ts`, Utilities: `utils/chat/agentkit/token-api/utils.ts`, Schemas: `utils/chat/agentkit/token-api/schemas.ts`)
+    -   **Functionality**: Provides comprehensive NFT data access including collections, individual items, ownership tracking, sales data, holder analysis, and activity monitoring across multiple blockchain networks.
+    -   **Key Aspects**:
+        -   **Multi-Network Support**: Supports mainnet, BSC, Base, Arbitrum, Optimism, Polygon, and Unichain networks for comprehensive NFT data coverage.
+        -   **Collection Analytics**: Query NFT collections with filtering by network, pagination, and metadata retrieval.
+        -   **Ownership Tracking**: Track NFT ownership patterns, holder distribution, and ownership history.
+        -   **Sales Analytics**: Access comprehensive sales data including transaction details, pricing trends, and market analysis.
+        -   **Activity Monitoring**: Monitor all NFT activities including transfers, sales, mints, and burns with detailed event tracking.
+        -   **Utility Functions**: Six specialized functions (`fetchNFTCollections`, `fetchNFTItems`, `fetchNFTSales`, `fetchNFTHolders`, `fetchNFTOwnerships`, `fetchNFTActivities`) for different NFT data types.
+        -   **Type Safety**: Comprehensive Zod schemas for all NFT data structures, parameters, and API responses ensuring robust validation.
 
 ### Key Files
 
@@ -1035,6 +1114,412 @@ query {
 4. **Validate GraphQL syntax** before execution
 5. **Check schema** before constructing complex queries
 
+## NFT API Integration
+
+### Overview
+
+The NFT API integration provides comprehensive access to NFT data across multiple blockchain networks. This system enables detailed analysis of NFT collections, individual items, ownership patterns, sales data, holder distribution, and activity monitoring through natural language queries.
+
+**Key Capabilities:**
+
+-   **Multi-Network Support**: Query NFT data across mainnet, BSC, Base, Arbitrum, Optimism, Polygon, and Unichain
+-   **Collection Analytics**: Comprehensive collection data including metadata, statistics, and trends
+-   **Ownership Tracking**: Detailed ownership information and transfer history
+-   **Sales Analysis**: Market data including transaction details, pricing, and trends
+-   **Activity Monitoring**: Real-time tracking of mints, transfers, sales, and burns
+-   **Holder Analysis**: Distribution patterns and top holder identification
+
+### Available NFT Tools
+
+The NFT API integration exposes six main tools through the AgentKit system:
+
+| Tool Name             | Description                       | Key Parameters                                                     |
+| --------------------- | --------------------------------- | ------------------------------------------------------------------ |
+| `get-nft-collections` | Analyze NFT collections           | `networkId`, `contractAddress`, `limit`, `page`                    |
+| `get-nft-items`       | Get individual NFT details        | `contractAddress`, `tokenId`, `networkId`, `ownerAddress`          |
+| `get-nft-sales`       | Retrieve NFT sales data           | `contractAddress`, `tokenId`, `networkId`, `limit`, `priceRange`   |
+| `get-nft-holders`     | Analyze NFT holder distribution   | `contractAddress`, `networkId`, `limit`, `minBalance`              |
+| `get-nft-ownerships`  | Track NFT ownership by address    | `ownerAddress`, `contractAddress`, `networkId`, `limit`            |
+| `get-nft-activities`  | Monitor NFT activities and events | `contractAddress`, `tokenId`, `networkId`, `activityType`, `limit` |
+
+### NFT Data Schemas
+
+The integration uses comprehensive Zod schemas for type safety and validation:
+
+**Core NFT Entities:**
+
+```typescript
+// NFT Collection Schema
+const NFTCollectionSchema = z.object({
+    address: z.string().describe("Collection contract address"),
+    name: z.string().optional().describe("Collection name"),
+    symbol: z.string().optional().describe("Collection symbol"),
+    totalSupply: z.string().optional().describe("Total number of NFTs"),
+    floorPrice: z.string().optional().describe("Current floor price"),
+    networkId: NetworkIdSchema.describe("Blockchain network"),
+});
+
+// NFT Item Schema
+const NFTItemSchema = z.object({
+    tokenId: z.string().describe("Token ID within collection"),
+    contractAddress: z.string().describe("Collection contract address"),
+    name: z.string().optional().describe("NFT name"),
+    description: z.string().optional().describe("NFT description"),
+    imageUrl: z.string().optional().describe("NFT image URL"),
+    attributes: z
+        .array(NFTAttributeSchema)
+        .optional()
+        .describe("NFT traits/attributes"),
+    owner: z.string().optional().describe("Current owner address"),
+});
+
+// NFT Sale Schema
+const NFTSaleSchema = z.object({
+    tokenId: z.string().describe("Token ID sold"),
+    contractAddress: z.string().describe("Collection contract address"),
+    price: z.string().describe("Sale price in wei"),
+    priceUsd: z.number().optional().describe("Sale price in USD"),
+    currency: z.string().describe("Payment currency"),
+    seller: z.string().describe("Seller address"),
+    buyer: z.string().describe("Buyer address"),
+    timestamp: z.string().describe("Sale timestamp"),
+    transactionHash: z.string().describe("Transaction hash"),
+});
+```
+
+**Parameter Schemas:**
+
+```typescript
+// Collection Query Parameters
+const NFTCollectionsParamsSchema = z.object({
+    networkId: NetworkIdSchema.optional(),
+    contractAddress: z.string().optional(),
+    limit: z.number().int().positive().max(100).optional(),
+    page: z.number().int().positive().optional(),
+});
+
+// Sales Query Parameters
+const NFTSalesParamsSchema = z.object({
+    contractAddress: z.string().optional(),
+    tokenId: z.string().optional(),
+    networkId: NetworkIdSchema.optional(),
+    seller: z.string().optional(),
+    buyer: z.string().optional(),
+    minPrice: z.string().optional(),
+    maxPrice: z.string().optional(),
+    limit: z.number().int().positive().max(100).optional(),
+});
+```
+
+### NFT Utility Functions
+
+The system includes six specialized utility functions for different NFT data types:
+
+```typescript
+// Fetch NFT collections with filtering and pagination
+export async function fetchNFTCollections(
+    params?: z.infer<typeof NFTCollectionsParamsSchema>
+): Promise<z.infer<typeof NFTCollectionsApiResponseSchema>>;
+
+// Get individual NFT details and metadata
+export async function fetchNFTItems(
+    params: z.infer<typeof NFTItemsParamsSchema>
+): Promise<z.infer<typeof NFTItemsApiResponseSchema>>;
+
+// Retrieve comprehensive sales data
+export async function fetchNFTSales(
+    params?: z.infer<typeof NFTSalesParamsSchema>
+): Promise<z.infer<typeof NFTSalesApiResponseSchema>>;
+
+// Analyze holder distribution and ownership patterns
+export async function fetchNFTHolders(
+    params: z.infer<typeof NFTHoldersParamsSchema>
+): Promise<z.infer<typeof NFTHoldersApiResponseSchema>>;
+
+// Track ownership by specific addresses
+export async function fetchNFTOwnerships(
+    params: z.infer<typeof NFTOwnershipsParamsSchema>
+): Promise<z.infer<typeof NFTOwnershipsApiResponseSchema>>;
+
+// Monitor all NFT activities and events
+export async function fetchNFTActivities(
+    params?: z.infer<typeof NFTActivitiesParamsSchema>
+): Promise<z.infer<typeof NFTActivitiesApiResponseSchema>>;
+```
+
+### Network Support
+
+All NFT tools support the following blockchain networks:
+
+-   **Mainnet** (`mainnet`): Ethereum mainnet
+-   **BSC** (`bsc`): Binance Smart Chain
+-   **Base** (`base`): Coinbase Layer 2
+-   **Arbitrum** (`arbitrum-one`): Arbitrum One
+-   **Optimism** (`optimism`): Optimism mainnet
+-   **Polygon** (`matic`): Polygon mainnet
+-   **Unichain** (`unichain`): Unichain network
+
+### Advanced Filtering Options
+
+**Collection Filtering:**
+
+-   Filter by specific contract addresses
+-   Network-based filtering
+-   Pagination support for large collections
+-   Metadata and statistics inclusion
+
+**Sales Analysis:**
+
+-   Price range filtering (min/max)
+-   Time-based filtering
+-   Buyer/seller address filtering
+-   Currency-specific analysis
+
+**Activity Monitoring:**
+
+-   Activity type filtering (mint, transfer, sale, burn)
+-   Contract and token-specific tracking
+-   Time range specifications
+-   Event detail inclusion
+
+**Ownership Analysis:**
+
+-   Multi-collection ownership tracking
+-   Balance thresholds
+-   Historical ownership data
+-   Transfer pattern analysis
+
+### Error Handling
+
+The NFT API integration includes comprehensive error handling:
+
+```typescript
+// Standardized error response format
+{
+  error: {
+    message: "Descriptive error message",
+    status: 400 | 404 | 500,
+    code?: "INVALID_CONTRACT_ADDRESS" | "NETWORK_NOT_SUPPORTED" | "TOKEN_NOT_FOUND"
+  }
+}
+```
+
+**Common Error Scenarios:**
+
+-   Invalid contract addresses
+-   Unsupported networks
+-   Token not found
+-   API rate limits
+-   Network connectivity issues
+
+### NFT Integration Best Practices
+
+1. **Use specific contract addresses** when possible for faster queries
+2. **Implement pagination** for large result sets (max 100 items per request)
+3. **Specify network ID** to avoid cross-network confusion
+4. **Handle rate limits** gracefully with retry logic
+5. **Cache frequently accessed data** (collection metadata, floor prices)
+6. **Validate addresses** before making API calls
+7. **Use appropriate filtering** to reduce response size
+8. **Monitor API usage** to stay within limits
+
+## Chat Interaction Examples
+
+This section demonstrates how users can interact with different data sources through natural language queries in the chat interface.
+
+### Subgraph MCP Interaction (via Chat)
+
+The MCP (Model Context Protocol) integration enables dynamic subgraph discovery and advanced querying through The Graph's official MCP server. Users can interact with subgraphs using natural language without needing to know specific subgraph IDs or GraphQL syntax.
+
+1.  **Subgraph Discovery by Keyword:**
+
+    ```
+    User: "Find Uniswap V3 subgraphs"
+    AI (Thinking): User wants to discover subgraphs related to Uniswap V3. I'll use the 'searchSubgraphs' action.
+    AI (Tool Invocation): [Invokes 'searchSubgraphs' with keyword: 'Uniswap V3']
+    AI (Response): "Found 5 Uniswap V3 subgraphs: [Lists subgraphs with names, descriptions, signal amounts, and current versions]"
+    ```
+
+2.  **Contract-Based Subgraph Discovery:**
+
+    ```
+    User: "Find the top subgraphs for contract 0x1f98431c8ad98523631ae4a59f267346ea31f984 on arbitrum-one"
+    AI (Thinking): User wants subgraphs indexing a specific contract on Arbitrum. I'll use 'getContractSubgraphs'.
+    AI (Tool Invocation): [Invokes 'getContractSubgraphs' with contractAddress: '0x1f98431c8ad98523631ae4a59f267346ea31f984', chain: 'arbitrum-one']
+    AI (Response): "Top subgraphs indexing this contract on Arbitrum: [Lists relevant subgraphs with query fees, deployment IDs, and metadata]"
+    ```
+
+3.  **Schema Exploration:**
+
+    ```
+    User: "What entities and fields are available in the Uniswap V3 mainnet subgraph?"
+    AI (Thinking): User wants to explore the schema. First I'll find the Uniswap V3 subgraph, then get its schema.
+    AI (Tool Invocation): [First searches for Uniswap V3, then invokes 'getSubgraphSchema' with the subgraph ID]
+    AI (Response): "The Uniswap V3 subgraph contains these entities: Pool, Token, Position, Swap, Mint, Burn. [Explains key fields and relationships]"
+    ```
+
+4.  **Advanced GraphQL Querying:**
+
+    ```
+    User: "What are the pairs with maximum volume on deployment 0xde0a7b5368f846f7d863d9f64949b688ad9818243151d488b4c6b206145b9ea3?"
+    AI (Thinking): User wants high-volume pairs from a specific deployment. I'll construct a GraphQL query for pools ordered by volume.
+    AI (Tool Invocation): [Invokes 'executeMCPQuery' with deployment ID and GraphQL query for pools ordered by volumeUSD]
+    AI (Response): "Top volume pairs in this deployment: [Lists pairs with token symbols, volume amounts, and TVL data]"
+    ```
+
+5.  **Token Market Cap Analysis:**
+
+    ```
+    User: "Which tokens have the highest market cap in this Subgraph?"
+    AI (Thinking): User wants token market cap data. I'll query for tokens ordered by market cap or total value locked.
+    AI (Tool Invocation): [Invokes 'executeMCPQuery' with appropriate GraphQL query for tokens ordered by market metrics]
+    AI (Response): "Highest market cap tokens: [Lists tokens with symbols, market cap values, and trading volumes]"
+    ```
+
+6.  **Recent Activity Queries:**
+
+    ```
+    User: "Show me the most recent 5 swaps for the USDC/ETH pair"
+    AI (Thinking): User wants recent swap data for a specific pair. I'll query for swaps filtered by token pair and ordered by timestamp.
+    AI (Tool Invocation): [Invokes 'executeMCPQuery' with GraphQL query for recent swaps on USDC/ETH pair]
+    AI (Response): "Recent USDC/ETH swaps: [Lists swaps with amounts, prices, transaction hashes, and timestamps]"
+    ```
+
+7.  **Cross-Network Subgraph Comparison:**
+
+    ```
+    User: "Compare Aave V3 subgraphs across different networks"
+    AI (Thinking): User wants to compare Aave across networks. I'll search for Aave V3 subgraphs and identify different network deployments.
+    AI (Tool Invocation): [Invokes 'searchSubgraphs' with keyword: 'Aave V3']
+    AI (Response): "Aave V3 deployments found on: Mainnet, Polygon, Arbitrum, Optimism. [Compares features and data availability across networks]"
+    ```
+
+8.  **Liquidity Pool Analysis:**
+
+    ```
+    User: "What are the deepest liquidity pools in the Uniswap V3 subgraph?"
+    AI (Thinking): User wants pools with highest TVL. I'll query for pools ordered by total value locked.
+    AI (Tool Invocation): [First finds Uniswap V3 subgraph, then executes query for pools ordered by totalValueLockedUSD]
+    AI (Response): "Deepest liquidity pools: [Lists pools with token pairs, TVL amounts, fee tiers, and volume metrics]"
+    ```
+
+9.  **Historical Data Exploration:**
+
+    ```
+    User: "Show me the lending activity trends for the past week in Aave"
+    AI (Thinking): User wants historical lending data. I'll find Aave subgraph and query for recent borrow/supply events.
+    AI (Tool Invocation): [Finds Aave subgraph, then executes time-filtered query for lending activities]
+    AI (Response): "Aave lending trends (past week): [Shows borrow/supply volumes, popular assets, and rate changes]"
+    ```
+
+10. **Debugging and Exploration:**
+
+    ```
+    User: "What MCP tools are available for subgraph analysis?"
+    AI (Thinking): User wants to know available MCP capabilities. I'll use the 'listMCPTools' action.
+    AI (Tool Invocation): [Invokes 'listMCPTools']
+    AI (Response): "Available MCP tools: search_subgraphs_by_keyword, get_top_subgraph_deployments, get_schema_by_subgraph_id, execute_query_by_subgraph_id, [etc.]"
+    ```
+
+**Key MCP Capabilities Demonstrated:**
+
+-   **Dynamic Discovery**: Find subgraphs without knowing IDs
+-   **Schema Introspection**: Explore available data structures
+-   **Flexible Querying**: Execute complex GraphQL queries
+-   **Cross-Network Analysis**: Compare data across different blockchains
+-   **Real-time Data**: Access the latest blockchain information
+-   **Natural Language Interface**: No need to write GraphQL manually
+
+### Token API Interaction (via Chat)
+
+This demonstrates how the Token API integration can be used through the chat interface. The AI agent would use the tools provided by `TokenApiProvider` (which in turn use `utils/chat/agentkit/token-api/utils.ts`) to fulfill these requests.
+
+1.  **Fetching Token Balances:**
+
+    ```
+    User: "What's the UNI balance for vitalik.eth on mainnet?"
+    AI (Thinking): User wants token balance. I need the address for vitalik.eth, the token symbol (UNI), and network (mainnet). I'll use the 'getTokenBalances' tool.
+    AI (Tool Invocation): [Invokes 'getTokenBalances' with address resolved from vitalik.eth, contract for UNI (if specified, else all balances), networkId: 'mainnet']
+    AI (Response): "Vitalik.eth has X UNI tokens on Mainnet. (USD Value: $Y)"
+    ```
+
+2.  **Fetching Token Transfers:**
+
+    ```
+    User: "Show me the latest 5 outgoing USDC transfers from 0x123...abc on Polygon."
+    AI (Thinking): User wants token transfers. I need the address, token (USDC), network (Polygon), direction (outgoing), and limit (5). I'll use 'getTokenTransfers' tool.
+    AI (Tool Invocation): [Invokes 'getTokenTransfers' with address: '0x123...abc', contract for USDC, networkId: 'matic', fromAddress: '0x123...abc', limit: 5]
+    AI (Response): "Here are the latest 5 outgoing USDC transfers from 0x123...abc on Polygon: [Lists transfers with details like recipient, amount, time]"
+    ```
+
+3.  **Fetching Token Metadata:**
+    ```
+    User: "What's the decimal count for the WETH token on Arbitrum?"
+    AI (Thinking): User wants token metadata (decimals). I need the token symbol (WETH) and network (Arbitrum). I'll use 'getTokenMetadata' tool.
+    AI (Tool Invocation): [Invokes 'getTokenMetadata' with contract for WETH, networkId: 'arbitrum-one']
+    AI (Response): "The WETH token on Arbitrum has 18 decimals."
+    ```
+
+### NFT API Interaction (via Chat)
+
+The NFT API integration enables comprehensive NFT data analysis through natural language queries. The AI agent uses specialized NFT tools to access collection data, ownership patterns, sales analytics, and activity monitoring.
+
+1.  **NFT Collection Analysis:**
+
+    ```
+    User: "Show me the top 5 NFT collections on mainnet"
+    AI (Thinking): User wants NFT collection data. I'll use 'get-nft-collections' with networkId: 'mainnet' and limit: 5.
+    AI (Tool Invocation): [Invokes 'get-nft-collections' with networkId: 'mainnet', limit: 5]
+    AI (Response): "Here are the top 5 NFT collections on mainnet: [Lists collections with names, addresses, total supply, and floor prices]"
+    ```
+
+2.  **NFT Ownership Tracking:**
+
+    ```
+    User: "What NFTs does 0x123...abc own on Polygon?"
+    AI (Thinking): User wants ownership data. I'll use 'get-nft-ownerships' with ownerAddress and networkId: 'matic'.
+    AI (Tool Invocation): [Invokes 'get-nft-ownerships' with ownerAddress: '0x123...abc', networkId: 'matic']
+    AI (Response): "0x123...abc owns X NFTs on Polygon: [Lists owned NFTs with collection names, token IDs, and metadata]"
+    ```
+
+3.  **NFT Sales Analysis:**
+
+    ```
+    User: "Show me recent CryptoPunks sales above 50 ETH"
+    AI (Thinking): User wants sales data for CryptoPunks with price filter. I'll use 'get-nft-sales' with collection filter and price minimum.
+    AI (Tool Invocation): [Invokes 'get-nft-sales' with contractAddress: '0xb47e3cd837ddf8e4c57f05d70ab865de6e193bbb', minPrice: '50000000000000000000', networkId: 'mainnet']
+    AI (Response): "Recent CryptoPunks sales above 50 ETH: [Lists sales with token IDs, prices, buyers, sellers, and timestamps]"
+    ```
+
+4.  **NFT Activity Monitoring:**
+
+    ```
+    User: "What's the latest activity for Bored Ape Yacht Club?"
+    AI (Thinking): User wants recent activity for BAYC. I'll use 'get-nft-activities' with the BAYC contract address.
+    AI (Tool Invocation): [Invokes 'get-nft-activities' with contractAddress: '0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d', networkId: 'mainnet', limit: 10]
+    AI (Response): "Latest BAYC activity: [Lists recent transfers, sales, and other activities with details]"
+    ```
+
+5.  **NFT Holder Analysis:**
+
+    ```
+    User: "Who are the top holders of Azuki NFTs?"
+    AI (Thinking): User wants holder distribution data. I'll use 'get-nft-holders' for the Azuki collection.
+    AI (Tool Invocation): [Invokes 'get-nft-holders' with contractAddress: '0xed5af388653567af2f388e6224dc7c4b3241c544', networkId: 'mainnet']
+    AI (Response): "Top Azuki holders: [Lists addresses with their token counts and percentages of total supply]"
+    ```
+
+6.  **Individual NFT Analysis:**
+
+    ```
+    User: "Tell me about CryptoPunk #1234"
+    AI (Thinking): User wants specific NFT data. I'll use 'get-nft-items' with the CryptoPunks contract and token ID.
+    AI (Tool Invocation): [Invokes 'get-nft-items' with contractAddress: '0xb47e3cd837ddf8e4c57f05d70ab865de6e193bbb', tokenId: '1234', networkId: 'mainnet']
+    AI (Response): "CryptoPunk #1234: [Shows metadata, attributes, current owner, last sale price, and rarity information]"
+    ```
+
+These examples illustrate how the natural language queries are translated by the AI into structured calls to the Token and NFT API utility functions, which then fetch the data via the `/api/token-proxy`.
+
 ### Available Subgraphs
 
 The integration includes several pre-configured subgraph endpoints:
@@ -1303,23 +1788,46 @@ This code is not audited and is intended for development and learning purposes o
 -   Do not expose API keys or private keys
 -   Use at your own risk!
 
-## Usage Examples
+## Performance Optimization
 
-### Chat Interface
+Best practices for optimizing application performance across all integrations.
 
-1. **Querying Uniswap Pools**
+### Query Optimization
 
-```
-User: "Show me the top 5 Uniswap pools by volume"
-AI: [Executes GraphQL query and formats response]
-```
+-   **Use pagination** for large result sets (max 100 items per request for APIs)
+-   **Limit the number of fields requested** in GraphQL queries
+-   **Cache responses** when appropriate, especially for static data like collection metadata
+-   **Use variables** for dynamic values in GraphQL queries
+-   **Implement request batching** where possible
+-   **Specify filters** to reduce dataset size before processing
 
-2. **Contract Interactions**
+### API Performance
 
-```
-User: "What was the last amount borrowed on Aave?"
-AI: [Queries for the borrows and responds]
-```
+-   **Monitor query execution time** and set reasonable timeouts
+-   **Implement retry logic** with exponential backoff for failed requests
+-   **Use appropriate indexes** for database queries
+-   **Cache frequently accessed data** like token metadata and collection info
+-   **Rate limit awareness** - respect API limits and implement queue systems if needed
+
+### Error Handling
+
+-   **Always check for error responses** from all API calls
+-   **Log errors** comprehensively for debugging
+-   **Provide user-friendly error messages** while preserving technical details for developers
+-   **Implement circuit breakers** for external API dependencies
+-   **Graceful degradation** when services are unavailable
+
+### Chat Interface Optimization
+
+-   **Stream responses** for better user experience
+-   **Optimize re-renders** by memoizing expensive components
+-   **Efficient message rendering** with proper key props
+-   **Debounce user input** to prevent excessive API calls
+-   **Loading states** to provide feedback during processing
+
+## Direct API Usage
+
+For developers who want to interact with the APIs directly without the chat interface:
 
 ### GraphQL Queries
 
@@ -1356,85 +1864,83 @@ query {
 }
 ```
 
-Example error response:
+### Token API Direct Calls
 
-```json
-{
-    "errors": [
-        {
-            "message": "Invalid API key",
-            "locations": [],
-            "path": [],
-            "extensions": {
-                "code": "UNAUTHORIZED"
-            }
-        }
-    ]
-}
+```typescript
+// Example: Fetch token balances using utility function
+import { fetchTokenBalances } from "./utils/chat/agentkit/token-api/utils";
+
+const balances = await fetchTokenBalances("0x123...", {
+    networkId: "mainnet",
+    page: 1,
+    page_size: 20,
+});
 ```
 
-### Token API Interaction (via Chat)
+### NFT API Direct Calls
 
-This demonstrates how the Token API integration can be used through the chat interface. The AI agent would use the tools provided by `TokenApiProvider` (which in turn use `utils/chat/agentkit/token-api/utils.ts`) to fulfill these requests.
+```typescript
+// Example: Fetch NFT collections
+import { fetchNFTCollections } from "./utils/chat/agentkit/token-api/utils";
 
-1.  **Fetching Token Balances:**
+const collections = await fetchNFTCollections({
+    networkId: "mainnet",
+    limit: 10,
+});
+```
 
-    ```
-    User: "What's the UNI balance for vitalik.eth on mainnet?"
-    AI (Thinking): User wants token balance. I need the address for vitalik.eth, the token symbol (UNI), and network (mainnet). I'll use the 'getTokenBalances' tool.
-    AI (Tool Invocation): [Invokes 'getTokenBalances' with address resolved from vitalik.eth, contract for UNI (if specified, else all balances), networkId: 'mainnet']
-    AI (Response): "Vitalik.eth has X UNI tokens on Mainnet. (USD Value: $Y)"
-    ```
+## System Architecture
 
-2.  **Fetching Token Transfers:**
+Understanding the application's technical architecture and how components work together.
 
-    ```
-    User: "Show me the latest 5 outgoing USDC transfers from 0x123...abc on Polygon."
-    AI (Thinking): User wants token transfers. I need the address, token (USDC), network (Polygon), direction (outgoing), and limit (5). I'll use 'getTokenTransfers' tool.
-    AI (Tool Invocation): [Invokes 'getTokenTransfers' with address: '0x123...abc', contract for USDC, networkId: 'matic', fromAddress: '0x123...abc', limit: 5]
-    AI (Response): "Here are the latest 5 outgoing USDC transfers from 0x123...abc on Polygon: [Lists transfers with details like recipient, amount, time]"
-    ```
+### Core Components
 
-3.  **Fetching Token Metadata:**
-    ```
-    User: "What's the decimal count for the WETH token on Arbitrum?"
-    AI (Thinking): User wants token metadata (decimals). I need the token symbol (WETH) and network (Arbitrum). I'll use 'getTokenMetadata' tool.
-    AI (Tool Invocation): [Invokes 'getTokenMetadata' with contract for WETH, networkId: 'arbitrum-one']
-    AI (Response): "The WETH token on Arbitrum has 18 decimals."
-    ```
+Detailed explanations of the foundational pieces of this application.
 
-These examples illustrate how the natural language queries are translated by the AI into structured calls to the Token API utility functions, which then fetch the data via the `/api/token-proxy`.
+1.  **Chat Interface** (`app/chat/page.tsx`)
 
-## API Interaction Best Practices
+    -   **Functionality**: Provides the user-facing UI for interacting with the AI agent. Users can type natural language queries related to blockchain data, smart contracts, or token information.
+    -   **Technologies**: Built with Next.js (React), utilizing hooks like `useChat` for managing conversation state, input handling, and message streaming.
+    -   **Key Aspects**: Supports real-time streaming of AI responses, renders markdown for formatted text, and displays structured information from tool calls (e.g., GraphQL query results).
 
-This section was previously "Rate Limiting and Best Practices" and has been broadened. These apply to interactions with both The Graph subgraphs and the external Token API.
+2.  **AgentKit Integration** (Primarily in `app/api/chat/route.ts` and `utils/chat/agentkit/`)
 
-### Query Optimization
+    -   **Functionality**: The backbone of the AI's ability to perform actions. AgentKit allows the definition of "tools" or "actions" that the AI (e.g., OpenAI GPT model) can invoke to interact with external systems.
+    -   **Key Aspects**:
+        -   **Action Providers**: Developers can implement `ActionProvider` interfaces (like `GraphQuerierProvider` or `TokenApiProvider`) to define specific capabilities.
+        -   **Tool Definition**: Actions are described with a name, description, and a Zod schema for input validation, making them understandable and usable by the AI.
+        -   **Invocation**: The AI decides which tool to use based on the user's query and the provided descriptions.
 
--   Use pagination for large result sets
--   Limit the number of fields requested
--   Cache responses when appropriate
--   Use variables for dynamic values
+3.  **MCP Integration** (`utils/chat/agentkit/action-providers/graph-mcp-provider.ts`)
 
-### Error Handling
+    -   **Functionality**: Connects directly to The Graph's official Model Context Protocol (MCP) server for advanced subgraph discovery and querying.
+    -   **Key Aspects**: Official MCP server connection, dynamic subgraph discovery, schema introspection, and flexible querying.
 
--   Always check for error responses
--   Implement retry logic with backoff
--   Log errors for debugging
--   Provide user-friendly error messages
+4.  **Token & NFT API Integration** (Proxy: `app/api/token-proxy/route.ts`, Utilities: `utils/chat/agentkit/token-api/utils.ts`)
 
-### Performance
+    -   **Functionality**: Provides comprehensive access to token and NFT data through secure proxy endpoints.
+    -   **Key Aspects**: Multi-network support, comprehensive filtering, type-safe schemas, and error handling.
 
--   Monitor query execution time
--   Use appropriate indexes
--   Implement request batching
--   Cache frequently accessed data
+### Data Flow
 
-## Development Guidelines
+```
+User Query → Chat Interface → API Route → AgentKit → Action Provider → External API/MCP Server → Response → AI Processing → Formatted Response → User
+```
+
+### Key Files
+
+This section highlights critical files and their roles:
+
+-   **`app/api/chat/route.ts`** - Main chat API endpoint and AI orchestration
+-   **`utils/chat/agentkit/action-providers/`** - Provider implementations for different data sources
+-   **`utils/chat/agentkit/token-api/`** - Token and NFT API utilities and schemas
+-   **`app/api/token-proxy/route.ts`** - Secure proxy for external API calls
+
+## Development Guide
 
 Guidelines for extending and maintaining the application.
 
-### Adding New Actions (AgentKit)
+### Adding New Integrations
 
 1.  **Define the Need**: What new capability do you want the AI to have? (e.g., fetch NFT floor prices, execute a swap quote).
 2.  **Implement ActionProvider Interface**:
@@ -1474,7 +1980,7 @@ How the AI presents information back to the user.
     -   Encourage the AI (via system prompt) to not just dump data, but to provide context or brief explanations, especially for complex information.
     -   For example, after showing token transfers, it might add, "These are the most recent transfers within the last X days."
 
-### Testing
+### Testing Strategies
 
 A multi-layered approach to ensure reliability.
 
@@ -1527,10 +2033,69 @@ A multi-layered approach to ensure reliability.
     - **SSE Connection Issues**: Server-Sent Events transport may fail due to network/proxy issues
 
 5. **Token API Proxy Issues**
+
     - **Misconfigured URL/Auth**: Double-check `NEXT_PUBLIC_GRAPH_API_URL`, `NEXT_PUBLIC_GRAPH_API_KEY`, and `NEXT_PUBLIC_GRAPH_TOKEN` (and their non-public equivalents if used) in your `.env.local` file.
     - **Path resolution**: Ensure the `path` parameter sent to `/api/token-proxy` correctly maps to the intended external API endpoint.
     - **External API Downtime/Errors**: The external Token API itself might be having issues. Check its status page if available. The proxy should forward error messages from the external API.
     - **Server-side logs**: Check the terminal output where your Next.js app is running for logs from `app/api/token-proxy/route.ts`. These logs often contain the exact URL being called and any errors received.
+
+6. **NFT API Issues**
+    - **Invalid Contract Addresses**: Ensure NFT contract addresses are valid and exist on the specified network. Use checksum addresses when possible.
+    - **Network Mismatches**: Verify that the NFT collection exists on the specified network (mainnet, polygon, etc.). Cross-check contract deployment networks.
+    - **Token Not Found**: When querying specific token IDs, ensure they exist within the collection and haven't been burned.
+    - **Rate Limiting**: NFT endpoints may have stricter rate limits due to data complexity. Implement proper retry logic with exponential backoff.
+    - **Large Collections**: For collections with millions of NFTs, use pagination and specific filtering to avoid timeouts.
+    - **Metadata Unavailability**: Some NFTs may have missing or invalid metadata. Handle null/undefined values gracefully.
+    - **Cross-Network Data**: When analyzing multi-network NFTs, remember to specify the correct networkId for each query.
+
+## API Reference
+
+Quick reference for all available integrations and their capabilities.
+
+### MCP Integration Summary
+
+-   **Purpose**: Dynamic subgraph discovery and querying
+-   **Endpoint**: The Graph's official MCP server
+-   **Key Tools**: `searchSubgraphs`, `getContractSubgraphs`, `getSubgraphSchema`, `executeMCPQuery`
+-   **Authentication**: GRAPH_API_KEY as Bearer token
+
+### Token API Summary
+
+-   **Purpose**: Comprehensive token data access
+-   **Networks**: All major EVM networks (7 supported)
+-   **Key Functions**: Balance checking, transfer history, metadata retrieval
+-   **Proxy**: `/api/token-proxy` for secure API access
+
+### NFT API Summary
+
+-   **Purpose**: NFT analytics and tracking
+-   **Networks**: All major EVM networks (7 supported)
+-   **Key Functions**: Collection analysis, ownership tracking, sales data, activity monitoring
+-   **Tools**: 6 specialized NFT endpoints
+-   **Proxy**: `/api/token-proxy` (shared with Token API)
+
+### Environment Variables Reference
+
+```bash
+# Required
+GRAPH_API_KEY=your-graph-api-key              # The Graph Protocol access
+OPENAI_API_KEY=your-openai-api-key            # AI functionality
+NEXTAUTH_SECRET=your-nextauth-secret          # Session management
+
+# Optional
+AGENT_PRIVATE_KEY=0x...                       # On-chain transactions
+NEXT_PUBLIC_GRAPH_API_KEY=your-token-api-key  # Token API access
+```
+
+### Supported Networks
+
+-   **Mainnet** (`mainnet`) - Ethereum mainnet
+-   **BSC** (`bsc`) - Binance Smart Chain
+-   **Base** (`base`) - Coinbase Layer 2
+-   **Arbitrum** (`arbitrum-one`) - Arbitrum One
+-   **Optimism** (`optimism`) - Optimism mainnet
+-   **Polygon** (`matic`) - Polygon mainnet
+-   **Unichain** (`unichain`) - Unichain network
 
 ## Contributing
 
