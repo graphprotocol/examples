@@ -1,4 +1,4 @@
-> **Last updated:** April 2025
+> **Last updated:** June 2025
 
 # Block Filtering Example
 
