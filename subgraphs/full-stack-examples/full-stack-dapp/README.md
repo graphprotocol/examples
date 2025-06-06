@@ -1,4 +1,4 @@
-> **Last updated:** June 2025
+> **Last updated:** Jan 2024
 
 # 🧙🏻‍♂️ An Introduction to Full Stack dapp Development 💻
 

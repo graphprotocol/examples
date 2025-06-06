@@ -1,4 +1,4 @@
-> **Last updated:** June 2025
+> **Last updated:** April 2025
 
 # Example NEAR Receipts Subgraph: Good Morning NEAR
 
