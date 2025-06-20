@@ -1,4 +1,4 @@
-> **Last updated:** March 2025
+> **Last updated:** June 2025
 
 # Subgraph Composition Example
 
