@@ -123,6 +123,8 @@ export const TokenTransfersParamsSchema = z.object({
   low_liquidity: z.boolean().optional(),
   start_date: z.string().optional().describe("Start date for filtering in ISO format (YYYY-MM-DDTHH:mm:ssZ)"),
   end_date: z.string().optional().describe("End date for filtering in ISO format (YYYY-MM-DDTHH:mm:ssZ)"),
+  startTime: z.number().optional().describe("Start timestamp (Unix timestamp in seconds)"),
+  endTime: z.number().optional().describe("End timestamp (Unix timestamp in seconds)"),
   include_prices: z.boolean().optional(),
 });
 
@@ -177,11 +179,27 @@ export const GetTokenTransfersAgentParamsSchema = TokenTransfersParamsSchema.ext
   addressRole: z
     .enum(["sender", "receiver", "either"])
     .optional()
-    .describe("Role of the primary address: sender, receiver, or either."),
+    .describe(
+      "Role of the primary address: sender, receiver, or either. Defaults to 'receiver' (incoming transfers) if not specified.",
+    ),
 
   // Allow agent to specify from/to directly, overriding the primary address/role logic if needed.
   fromAddress: z.string().optional().describe("Filter by sender address."),
   toAddress: z.string().optional().describe("Filter by receiver address."),
+
+  // Time filtering options - prefer startTime/endTime over age for large datasets
+  startTime: z
+    .number()
+    .optional()
+    .describe(
+      "Start timestamp (Unix timestamp in seconds). Preferred over age parameter for large datasets to avoid timeouts.",
+    ),
+  endTime: z
+    .number()
+    .optional()
+    .describe(
+      "End timestamp (Unix timestamp in seconds). Preferred over age parameter for large datasets to avoid timeouts.",
+    ),
 
   // contractAddress is already in TokenTransfersParamsSchema as 'contract'
   // networkId is already in TokenTransfersParamsSchema as 'network_id'

@@ -21,8 +21,37 @@ export type TokenBalance = z.infer<typeof import("./schemas").TokenBalanceSchema
 // Define TokenInfo type from schema
 export type TokenInfo = z.infer<typeof TokenInfoSchema>;
 
-const NEXT_PUBLIC_BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-const API_PROXY_URL = `${NEXT_PUBLIC_BASE_URL}/api/token-proxy`; // Ensure this matches your proxy endpoint
+// Determine the correct API proxy URL based on environment
+function getApiProxyUrl(): string {
+  // If we're in a browser environment, use relative URL
+  if (typeof window !== "undefined") {
+    return "/api/token-proxy";
+  }
+
+  // Server-side: construct absolute URL
+  const baseUrl =
+    process.env.NEXT_PUBLIC_BASE_URL || process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "http://localhost:3000";
+
+  return `${baseUrl}/api/token-proxy`;
+}
+
+const API_PROXY_URL = getApiProxyUrl();
+
+/**
+ * Helper function to convert days ago to Unix timestamps
+ * @param daysAgo Number of days to look back from now
+ * @returns Object with startTime and endTime Unix timestamps
+ */
+export function convertDaysToTimestamps(daysAgo: number): { startTime: number; endTime: number } {
+  const now = Math.floor(Date.now() / 1000); // Current time in seconds
+  const startTime = now - daysAgo * 24 * 60 * 60; // Convert days to seconds
+  return {
+    startTime,
+    endTime: now,
+  };
+}
 
 /**
  * Fetches token balances from the token API proxy.
@@ -197,7 +226,7 @@ export async function fetchTokenTransfers(
   toAddress: string | undefined, // The address is primarily used as the 'to' parameter
   params?: Omit<TokenTransfersParams, "to">, // Params excluding 'to', as toAddress takes precedence
 ): Promise<TokenTransfersApiResponse> {
-  const endpoint = "transfers/evm"; // Based on useTokenTransfers hook
+  const endpoint = "transfers/evm"; // Base endpoint as per The Graph documentation
 
   const queryParams = new URLSearchParams();
   queryParams.append("path", endpoint);
@@ -207,8 +236,9 @@ export async function fetchTokenTransfers(
     ...params, // Spread other parameters like from, contract, limit, age etc.
   };
 
+  // Set the main address as 'to' parameter if provided
   if (toAddress) {
-    apiParams.to = toAddress; // Set the 'to' parameter from the main address argument
+    apiParams.to = toAddress;
   }
 
   // It's crucial that network_id is passed if available in params
@@ -216,17 +246,40 @@ export async function fetchTokenTransfers(
     apiParams.network_id = params.network_id;
   }
 
+  // Handle time filtering - prioritize startTime/endTime over age
+  if (params?.startTime) {
+    apiParams.startTime = params.startTime;
+  }
+
+  if (params?.endTime) {
+    apiParams.endTime = params.endTime;
+  }
+
+  // Only include age if startTime/endTime are not provided to avoid conflicts
+  if (params?.age && !params?.startTime && !params?.endTime) {
+    apiParams.age = params.age;
+  }
+
+  // Add default ordering as per The Graph documentation
+  if (!apiParams.orderBy) {
+    apiParams.orderBy = "timestamp";
+  }
+
+  if (!apiParams.orderDirection) {
+    apiParams.orderDirection = "desc";
+  }
+
+  console.log(`🔍 API params being sent:`, JSON.stringify(apiParams, null, 2));
+
   Object.entries(apiParams).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== "") {
       queryParams.append(key, String(value));
     }
   });
 
-  // If no 'to' address is effectively provided (neither toAddress nor params.to) and endpoint requires it,
-  // the API might error or return broad results. Consider adding a check if toAddress is mandatory.
+  // Validate that we have some filtering criteria to avoid overly broad queries
   if (!apiParams.to && !apiParams.from && !apiParams.contract) {
-    // Example check: if the query is too broad without a primary subject (to/from/contract)
-    // return { error: { message: "Address or contract parameter is required for token transfers", status: 400 } };
+    return { error: { message: "At least one of 'to', 'from', or 'contract' address must be specified", status: 400 } };
   }
 
   const url = `${API_PROXY_URL}?${queryParams.toString()}`;

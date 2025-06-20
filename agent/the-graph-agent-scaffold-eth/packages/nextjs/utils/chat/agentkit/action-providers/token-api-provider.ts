@@ -177,7 +177,7 @@ class TokenApiProvider extends ActionProvider<WalletProvider> { // Use WalletPro
 
   @CreateAction({
     name: "get-token-transfers",
-    description: "Fetches token transfers involving a specific address or contract. Can filter by sender, receiver, date range, etc.",
+    description: "Fetches token transfers involving a specific address or contract. Can filter by sender, receiver, date range, etc. If addressRole is not specified, defaults to showing incoming transfers (receiver). If no time filters are provided, automatically applies a 7-day lookback to prevent API timeouts.",
     schema: GetTokenTransfersAgentParamsSchema,
   })
   async getTokenTransfers(
@@ -186,37 +186,71 @@ class TokenApiProvider extends ActionProvider<WalletProvider> { // Use WalletPro
   ): Promise<string> {
     console.log(`Action: getTokenTransfers, Args: ${JSON.stringify(args)}`);
 
-    const { address, addressRole, fromAddress, toAddress, ...otherParams } = args;
+    const { address, addressRole, fromAddress, toAddress, age, startTime, endTime, ...otherParams } = args;
 
     let finalToAddress: string | undefined = toAddress;
     let finalFromAddress: string | undefined = fromAddress;
 
     if (address) {
-      if (addressRole === "receiver" && !finalToAddress) {
+      // Default to "receiver" if no role is specified (most common use case)
+      const role = addressRole || "receiver";
+      
+      if (role === "receiver" && !finalToAddress) {
         finalToAddress = address;
-      } else if (addressRole === "sender" && !finalFromAddress) {
+      } else if (role === "sender" && !finalFromAddress) {
         finalFromAddress = address;
-      } else if (addressRole === "either") {
-        // If role is 'either', and specific from/to are not set, 
-        // this basic setup will use the address for 'to' in fetchTokenTransfers (first arg),
-        // and potentially for 'from' in its params if finalFromAddress is still undefined.
-        // A true 'either' might require two API calls or specific backend support.
+      } else if (role === "either") {
+        // For "either", we'll default to receiver for now
+        // TODO: In the future, this could make two API calls and merge results
         if (!finalToAddress) finalToAddress = address;
-        if (!finalFromAddress) finalFromAddress = address; 
+        console.log(`📝 Note: Using address as receiver for "either" role. Consider making separate queries for complete results.`);
       }
     }
     
-    // If after all logic, neither toAddress nor fromAddress is set, and no contract is specified,
-    // the query might be too broad. The utility has a placeholder for this check.
+    // More specific error message with guidance
     if (!finalToAddress && !finalFromAddress && !otherParams.contract) {
-        return "Error: Token transfers query is too broad. Please specify an address (with role), from/to address, or a contract address.";
+        return `Error: Please specify one of the following:
+- An address with a role (receiver/sender/either) 
+- A fromAddress (sender)
+- A toAddress (receiver)  
+- A contract address to filter by
+
+Examples:
+- To see incoming transfers: specify addressRole as "receiver" (this is the default)
+- To see outgoing transfers: specify addressRole as "sender"
+- To see transfers for a specific token: provide the contract address`;
+    }
+
+    // Handle time filtering - prefer startTime/endTime over age to avoid timeouts
+    let finalStartTime: number | undefined = startTime;
+    let finalEndTime: number | undefined = endTime;
+    let finalAge: number | undefined = age;
+
+    // If age is provided but no explicit start/end times, convert age to timestamps
+    // This helps avoid API timeouts for large datasets
+    if (age && !startTime && !endTime) {
+      const now = Math.floor(Date.now() / 1000); // Current time in seconds
+      finalEndTime = now;
+      finalStartTime = now - (age * 24 * 60 * 60); // Convert days to seconds
+      finalAge = undefined; // Remove age since we're using timestamps
+    }
+
+    // If NO time filtering is provided at all, default to last 7 days to prevent timeouts
+    if (!age && !startTime && !endTime) {
+      const now = Math.floor(Date.now() / 1000);
+      finalEndTime = now;
+      finalStartTime = now - (7 * 24 * 60 * 60); // Default to 7 days
+      console.log(`📅 No time filter provided. Defaulting to last 7 days to prevent API timeout.`);
     }
 
     // Prepare parameters for the fetchTokenTransfers utility
     // The utility expects `toAddress` as first arg, and other params (including `from`) in the second.
     const utilityParams: Omit<TokenTransfersParams, 'to'> = {
-        ...otherParams, // network_id, contract, limit, age, etc.
+        ...otherParams, // network_id, contract, limit, etc.
         from: finalFromAddress, // This can be undefined, and fetchTokenTransfers handles it
+        age: finalAge, // Only use age if startTime/endTime are not set
+        startTime: finalStartTime,
+        endTime: finalEndTime,
     };
 
     try {
@@ -228,7 +262,12 @@ class TokenApiProvider extends ActionProvider<WalletProvider> { // Use WalletPro
       }
 
       if (!response.data || !response.data.transfers || response.data.transfers.length === 0) {
-        return `No token transfers found matching the criteria.`;
+        const roleText = addressRole || "receiver";
+        return `No token transfers found for address ${address} as ${roleText} on ${otherParams.network_id || 'mainnet'}. Try:
+- Different addressRole (sender/receiver/either)
+- Different network
+- Longer time period
+- Check if the address has any token activity`;
       }
 
       // The response.data from fetchTokenTransfers includes { transfers: [], pagination: {}, ... }

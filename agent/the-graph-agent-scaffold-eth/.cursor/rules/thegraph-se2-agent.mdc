@@ -1,0 +1,8 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Documentation
+
+Always check here for how to interact with the API [docs](https://thegraph.com/docs/en/token-api/evm/get-balances-evm-by-address/)
