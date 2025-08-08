@@ -1,4 +1,4 @@
-> **Last updated:** June 2025
+> **Last updated:** April 2025
 
 # Subgraph Development and Querying Workshop
 
